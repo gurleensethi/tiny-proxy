@@ -1,0 +1,15 @@
+# proxy config
+servers:
+  # server config
+  - http:
+      # http config
+      host: localhost
+      port: 8000
+      log: true
+      routes:
+        - path: "/api/.+"
+          backend:
+            url: http://localhost:4242
+        - path: "/frontend/*"
+          backend:
+            url: http://localhost:5173
