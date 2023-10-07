@@ -2,8 +2,11 @@ package middleware
 
 import "log/slog"
 
-func NewLogMiddlewareFromOptions(opts map[string]any) (*LogMiddleware, error) {
-	m := &LogMiddleware{}
+func NewLogMiddlewareFromOptions(infoLogger, errLogger *slog.Logger, opts map[string]any) (*LogMiddleware, error) {
+	m := &LogMiddleware{
+		InfoLogger:  infoLogger,
+		ErrorLogger: errLogger,
+	}
 
 	m.Options.Load(opts)
 
@@ -16,7 +19,9 @@ func NewLogMiddlewareFromOptions(opts map[string]any) (*LogMiddleware, error) {
 }
 
 type LogMiddleware struct {
-	Options LogMiddlewareOptions `json:"options"`
+	InfoLogger  *slog.Logger
+	ErrorLogger *slog.Logger
+	Options     LogMiddlewareOptions `json:"options"`
 }
 
 func (*LogMiddleware) PostResponse(opts PostResponseOptions) error {
@@ -30,7 +35,7 @@ func (*LogMiddleware) PreResponse(opts PreResponseOptions) error {
 func (m *LogMiddleware) RequestReceived(opts RequestReceivedOptions) error {
 	r := opts.Request
 
-	opts.InfoLogger.Info("request received",
+	m.InfoLogger.Info("request received",
 		slog.String("method", r.Method),
 		slog.String("path", r.URL.Path),
 		slog.String("host", r.Host),

@@ -7,24 +7,18 @@ import (
 )
 
 type RequestReceivedOptions struct {
-	InfoLogger  *slog.Logger
-	ErrorLogger *slog.Logger
-	Request     *http.Request
-	Writer      http.ResponseWriter
+	Request *http.Request
+	Writer  http.ResponseWriter
 }
 
 type PreResponseOptions struct {
-	InfoLogger  *slog.Logger
-	ErrorLogger *slog.Logger
-	Request     *http.Request
-	Writer      http.ResponseWriter
+	Request *http.Request
+	Writer  http.ResponseWriter
 }
 
 type PostResponseOptions struct {
-	InfoLogger  *slog.Logger
-	ErrorLogger *slog.Logger
-	Request     *http.Request
-	Writer      http.ResponseWriter
+	Request *http.Request
+	Writer  http.ResponseWriter
 }
 
 type Middleware interface {
@@ -66,10 +60,14 @@ func (m Middlewares) ExecutePostResponse(opts PostResponseOptions) error {
 	return nil
 }
 
-func LoadMiddleware(name string, opts map[string]any) (Middleware, error) {
+func LoadMiddleware(name string, infoLogger, errorLogger *slog.Logger, opts map[string]any) (Middleware, error) {
 	switch name {
 	case "log":
-		return NewLogMiddlewareFromOptions(opts)
+		return NewLogMiddlewareFromOptions(
+			infoLogger.With(slog.String("middleware", name)),
+			errorLogger.With(slog.String("middleware", name)),
+			opts,
+		)
 	default:
 		return nil, errors.New("unknown middleware: " + name)
 	}

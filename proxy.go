@@ -40,7 +40,7 @@ func (p *Proxy) Start(ctx context.Context) error {
 		middlewares := middleware.Middlewares{}
 		if server.Http != nil {
 			for _, m := range server.Http.Middlewares {
-				m, err := middleware.LoadMiddleware(m.Name, m.Options)
+				m, err := middleware.LoadMiddleware(m.Name, p.infoLog, p.errorLog, m.Options)
 				if err != nil {
 					return err
 				}
@@ -66,10 +66,8 @@ func (p *Proxy) Start(ctx context.Context) error {
 			backendURL, _ := url.Parse(route.Backend.URL)
 
 			middlewares.ExecuteRequestReceived(middleware.RequestReceivedOptions{
-				InfoLogger:  p.infoLog,
-				ErrorLogger: p.errorLog,
-				Request:     r,
-				Writer:      w,
+				Request: r,
+				Writer:  w,
 			})
 
 			backendURL.Path = r.URL.Path
