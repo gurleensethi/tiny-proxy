@@ -1,3 +1,12 @@
+# tiny-proxy
+
+Hacking around a simple http proxy.
+
+Don't use in production!
+
+# Example Config
+
+```yaml
 servers:
   - http:
       host: localhost
@@ -10,3 +19,4 @@ servers:
         - path: "/frontend/*"
           backend:
             url: http://localhost:5173
+```
