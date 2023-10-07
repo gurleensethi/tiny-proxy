@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -33,8 +32,6 @@ func (m *RegexRouteMatcher) LoadRoutes(routes ...RouteConfig) error {
 			pathRegex = "^" + pathRegex
 		}
 		pathRegex = strings.ReplaceAll(pathRegex, "/", "\\/")
-
-		fmt.Println(pathRegex)
 
 		regex, err := regexp.Compile(pathRegex)
 		if err != nil {

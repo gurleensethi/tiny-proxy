@@ -1,0 +1,15 @@
+version: 3
+
+tasks:
+  setup-dev:
+    desc: Setup dependencies for local development (run only once).
+    cmds:
+      - go install github.com/cosmtrek/air@latest
+  dev:
+    desc: Run the application in development mode.
+    cmds:
+      - air
+  build-image:
+    desc: Build the docker image.
+    cmds:
+      - docker build -t tinxy-proxy:latest .

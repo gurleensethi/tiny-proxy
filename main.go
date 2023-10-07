@@ -14,10 +14,18 @@ func main() {
 		AddSource: true,
 	}))
 
+	if len(os.Args) < 2 {
+		errorLog.Error("please provide a path to the configuration file")
+		os.Exit(1)
+	}
+
+	configPath := os.Args[1]
+
 	infoLog.Info("welcome to tiny proxy...")
+	infoLog.Info("loading configuration file", slog.String("path", configPath))
 
 	// TODO: accept the path from command line flags
-	config, err := LoadConfig("proxy-config.yaml")
+	config, err := LoadConfig(configPath)
 	if err != nil {
 		errorLog.Error("failed to load config, please check your configuration file")
 		panic(err)

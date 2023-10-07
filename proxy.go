@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+
+	"github.com/gurleensethi/tiny-proxy/middleware"
 )
 
 func New(c *ProxyConfig, infoLog *slog.Logger, errorLog *slog.Logger) *Proxy {
@@ -35,6 +37,18 @@ func (p *Proxy) Start(ctx context.Context) error {
 			return err
 		}
 
+		middlewares := middleware.Middlewares{}
+		if server.Http != nil {
+			for _, m := range server.Http.Middlewares {
+				m, err := middleware.LoadMiddleware(m.Name, m.Options)
+				if err != nil {
+					return err
+				}
+
+				middlewares = append(middlewares, m)
+			}
+		}
+
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			route, err := routeMatcher.Match(r)
 			if err != nil {
@@ -51,15 +65,12 @@ func (p *Proxy) Start(ctx context.Context) error {
 
 			backendURL, _ := url.Parse(route.Backend.URL)
 
-			if server.Http.Log {
-				p.infoLog.Info("proxying request to backend",
-					slog.String("path", backendURL.Path),
-					slog.String("method", r.Method),
-					slog.String("host", backendURL.Host),
-					slog.String("scheme", backendURL.Scheme),
-					slog.String("to", backendURL.String()),
-				)
-			}
+			middlewares.ExecuteRequestReceived(middleware.RequestReceivedOptions{
+				InfoLogger:  p.infoLog,
+				ErrorLogger: p.errorLog,
+				Request:     r,
+				Writer:      w,
+			})
 
 			backendURL.Path = r.URL.Path
 			backendURL.RawQuery = r.URL.RawQuery
@@ -128,10 +139,6 @@ func (p *Proxy) Start(ctx context.Context) error {
 		if server.Http != nil {
 			var handler http.Handler = mux
 
-			if server.Http.Log {
-				handler = requestLogger(p.infoLog, mux)
-			}
-
 			p.infoLog.Info("starting http server...",
 				slog.String("host", server.Http.Host),
 				slog.Int("port", server.Http.Port))
@@ -146,18 +153,4 @@ func (p *Proxy) Start(ctx context.Context) error {
 	}
 
 	return errors.New("no server config found")
-}
-
-func requestLogger(logger *slog.Logger, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Info("request received",
-			slog.String("method", r.Method),
-			slog.String("path", r.URL.Path),
-			slog.String("host", r.Host),
-			slog.String("scheme", r.URL.Scheme),
-			slog.String("remoteAddr", r.RemoteAddr),
-		)
-
-		next.ServeHTTP(w, r)
-	})
 }

@@ -2,7 +2,9 @@ servers:
   - http:
       host: localhost
       port: 8000
-      log: true
+      middlewares:
+        - name: log
+        # - name: cors
       routes:
         - path: "/api/.+"
           backend:

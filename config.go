@@ -38,11 +38,24 @@ func (c RouteConfig) Validate() error {
 	return nil
 }
 
+type MiddlewareConfig struct {
+	Name    string                 `yaml:"name"`
+	Options map[string]interface{} `yaml:"options"`
+}
+
+func (c MiddlewareConfig) Validate() error {
+	if c.Name == "" {
+		return errors.New("http.middlewares[].name is required")
+	}
+
+	return nil
+}
+
 type HttpConfig struct {
-	Host   string        `yaml:"host"`
-	Port   int           `yaml:"port"`
-	Routes []RouteConfig `yaml:"routes"`
-	Log    bool          `yaml:"log"`
+	Host        string             `yaml:"host"`
+	Port        int                `yaml:"port"`
+	Middlewares []MiddlewareConfig `yaml:"middlewares"`
+	Routes      []RouteConfig      `yaml:"routes"`
 }
 
 func (c HttpConfig) Validate() error {
@@ -56,6 +69,13 @@ func (c HttpConfig) Validate() error {
 
 	if c.Port < 0 || c.Port > 65535 {
 		return errors.New("port must be between 0 and 65535")
+	}
+
+	for _, middleware := range c.Middlewares {
+		err := middleware.Validate()
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, route := range c.Routes {
