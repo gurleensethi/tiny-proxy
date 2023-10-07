@@ -50,6 +50,11 @@ func (p *Proxy) Start(ctx context.Context) error {
 		}
 
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			middlewares.ExecuteRequestReceived(middleware.RequestReceivedOptions{
+				Request: r,
+				Writer:  w,
+			})
+
 			route, err := routeMatcher.Match(r)
 			if err != nil {
 				p.errorLog.Error("failed to match route", slog.Any("error", err))
@@ -64,11 +69,6 @@ func (p *Proxy) Start(ctx context.Context) error {
 			}
 
 			backendURL, _ := url.Parse(route.Backend.URL)
-
-			middlewares.ExecuteRequestReceived(middleware.RequestReceivedOptions{
-				Request: r,
-				Writer:  w,
-			})
 
 			backendURL.Path = r.URL.Path
 			backendURL.RawQuery = r.URL.RawQuery

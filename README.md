@@ -11,7 +11,13 @@ servers:
   - http:
       host: localhost
       port: 8000
-      log: true
+      middlewares:
+        - name: log
+        - name: cors
+          options:
+            allowOrigins: ["*"]
+            allowMethods: ["*"]
+            allowHeaders: ["*"]
       routes:
         - path: "/api/.+"
           backend:

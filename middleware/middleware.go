@@ -68,6 +68,12 @@ func LoadMiddleware(name string, infoLogger, errorLogger *slog.Logger, opts map[
 			errorLogger.With(slog.String("middleware", name)),
 			opts,
 		)
+	case "cors":
+		return NewCORSMiddlewareFromOptions(
+			infoLogger.With(slog.String("middleware", name)),
+			errorLogger.With(slog.String("middleware", name)),
+			opts,
+		)
 	default:
 		return nil, errors.New("unknown middleware: " + name)
 	}

@@ -4,7 +4,11 @@ servers:
       port: 8000
       middlewares:
         - name: log
-        # - name: cors
+        - name: cors
+          options:
+            allowOrigins: ["*"]
+            allowMethods: ["*"]
+            allowHeaders: ["*"]
       routes:
         - path: "/api/.+"
           backend:
