@@ -50,10 +50,17 @@ func (p *Proxy) Start(ctx context.Context) error {
 		}
 
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			middlewares.ExecuteRequestReceived(middleware.RequestReceivedOptions{
+			err := middlewares.ExecuteRequestReceived(middleware.RequestReceivedOptions{
 				Request: r,
 				Writer:  w,
 			})
+			if err != nil {
+				p.errorLog.Error("failed to execute request received middleware",
+					slog.Any("error", err),
+				)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
 			route, err := routeMatcher.Match(r)
 			if err != nil {
@@ -106,6 +113,16 @@ func (p *Proxy) Start(ctx context.Context) error {
 				}
 			}
 
+			err = middlewares.ExecutePreResponse(middleware.PreResponseOptions{
+				Request: r,
+				Writer:  w,
+			})
+			if err != nil {
+				p.errorLog.Error("failed to execute pre response middleware", slog.Any("error", err))
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
 			w.WriteHeader(resp.StatusCode)
 
 			buffer := make([]byte, 4*1024)
@@ -131,6 +148,16 @@ func (p *Proxy) Start(ctx context.Context) error {
 				p.errorLog.Error("failed to close response body",
 					slog.Any("error", err),
 				)
+			}
+
+			err = middlewares.ExecutePostResponse(middleware.PostResponseOptions{
+				Request: r,
+				Writer:  w,
+			})
+			if err != nil {
+				p.errorLog.Error("failed to execute pre response middleware", slog.Any("error", err))
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
 		})
 

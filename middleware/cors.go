@@ -54,10 +54,6 @@ func (m *CORSMiddleware) PostResponse(opts PostResponseOptions) error {
 }
 
 func (m *CORSMiddleware) PreResponse(opts PreResponseOptions) error {
-	return nil
-}
-
-func (m *CORSMiddleware) RequestReceived(opts RequestReceivedOptions) error {
 	if m.Options.All {
 		opts.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		opts.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -76,5 +72,9 @@ func (m *CORSMiddleware) RequestReceived(opts RequestReceivedOptions) error {
 		}
 	}
 
+	return nil
+}
+
+func (m *CORSMiddleware) RequestReceived(opts RequestReceivedOptions) error {
 	return nil
 }
