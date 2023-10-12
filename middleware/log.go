@@ -24,6 +24,20 @@ type LogMiddleware struct {
 	Options     LogMiddlewareOptions `json:"options"`
 }
 
+func (m *LogMiddleware) PreProxyRequest(opts PreProxyRequestOptions) error {
+	r := opts.ProxyRequest
+
+	m.InfoLogger.Info("proxying request",
+		slog.String("method", r.Method),
+		slog.String("path", r.URL.Path),
+		slog.String("host", r.Host),
+		slog.String("scheme", r.URL.Scheme),
+		slog.String("remoteAddr", r.RemoteAddr),
+	)
+
+	return nil
+}
+
 func (*LogMiddleware) PostResponse(opts PostResponseOptions) error {
 	return nil
 }

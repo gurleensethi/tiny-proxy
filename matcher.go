@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
 type RouteMatcher interface {
-	Match(r *http.Request) (*RouteConfig, error)
+	Match(r *http.Request) (*MatchResult, error)
 }
 
 type RegexRoute struct {
@@ -47,11 +48,27 @@ func (m *RegexRouteMatcher) LoadRoutes(routes ...RouteConfig) error {
 	return nil
 }
 
-func (m *RegexRouteMatcher) Match(r *http.Request) (*RouteConfig, error) {
+type MatchResult struct {
+	Route *RouteConfig
+	Match map[string]string
+}
+
+func (m *RegexRouteMatcher) Match(r *http.Request) (*MatchResult, error) {
 	for _, route := range m.routes {
-		if route.regex.MatchString(r.URL.Path) {
-			return &route.config, nil
+		matches := route.regex.FindStringSubmatch(r.URL.Path)
+		if len(matches) > 0 {
+			match := make(map[string]string)
+
+			for i, v := range matches[1:] {
+				match[fmt.Sprintf("{%d}", i+1)] = v
+			}
+
+			return &MatchResult{
+				Route: &route.config,
+				Match: match,
+			}, nil
 		}
+
 	}
 
 	return nil, nil

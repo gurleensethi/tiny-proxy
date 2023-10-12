@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gurleensethi/tiny-proxy/middleware"
 )
@@ -62,23 +63,31 @@ func (p *Proxy) Start(ctx context.Context) error {
 				return
 			}
 
-			route, err := routeMatcher.Match(r)
+			matchResult, err := routeMatcher.Match(r)
 			if err != nil {
 				p.errorLog.Error("failed to match route", slog.Any("error", err))
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
-			if route == nil {
+			if matchResult == nil {
 				w.Header().Set("X-Response-From", "tiny-proxy")
 				http.Error(w, "404 page not found", http.StatusNotFound)
 				return
 			}
 
-			backendURL, _ := url.Parse(route.Backend.URL)
+			backendURL, _ := url.Parse(matchResult.Route.Backend.URL)
 
 			backendURL.Path = r.URL.Path
 			backendURL.RawQuery = r.URL.RawQuery
+
+			// Replace all the placeholders in the rewrite path
+			if matchResult.Route.Rewrite != nil {
+				backendURL.Path = *matchResult.Route.Rewrite
+				for k, v := range matchResult.Match {
+					backendURL.Path = strings.ReplaceAll(backendURL.Path, k, v)
+				}
+			}
 
 			proxyRequest := &http.Request{
 				Method:        r.Method,
@@ -93,6 +102,12 @@ func (p *Proxy) Start(ctx context.Context) error {
 				RemoteAddr:    r.RemoteAddr,
 				TLS:           r.TLS,
 			}
+
+			middlewares.ExecutePreProxyRequest(middleware.PreProxyRequestOptions{
+				Request:      r,
+				Writer:       w,
+				ProxyRequest: proxyRequest,
+			})
 
 			resp, err := http.DefaultClient.Do(proxyRequest)
 			if err != nil {

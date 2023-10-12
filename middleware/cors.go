@@ -49,6 +49,11 @@ type CORSMiddleware struct {
 	Options     CORSMiddlewareOptions `json:"options"`
 }
 
+// PreProxyRequest implements Middleware.
+func (m *CORSMiddleware) PreProxyRequest(opts PreProxyRequestOptions) error {
+	return nil
+}
+
 func (m *CORSMiddleware) PostResponse(opts PostResponseOptions) error {
 	return nil
 }

@@ -27,6 +27,7 @@ func (c BackendConfig) Validate() error {
 
 type RouteConfig struct {
 	Path    string        `yaml:"path"`
+	Rewrite *string       `yaml:"rewrite"`
 	Backend BackendConfig `yaml:"backend"`
 }
 

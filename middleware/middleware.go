@@ -11,6 +11,12 @@ type RequestReceivedOptions struct {
 	Writer  http.ResponseWriter
 }
 
+type PreProxyRequestOptions struct {
+	Request      *http.Request
+	ProxyRequest *http.Request
+	Writer       http.ResponseWriter
+}
+
 type PreResponseOptions struct {
 	Request *http.Request
 	Writer  http.ResponseWriter
@@ -23,6 +29,10 @@ type PostResponseOptions struct {
 
 type Middleware interface {
 	RequestReceived(opts RequestReceivedOptions) error
+
+	// PreProxyRequest is called after a match for the request is found and before the request is proxied.
+	PreProxyRequest(opts PreProxyRequestOptions) error
+
 	PreResponse(opts PreResponseOptions) error
 	PostResponse(opts PostResponseOptions) error
 }
@@ -53,6 +63,16 @@ func (m Middlewares) ExecutePreResponse(opts PreResponseOptions) error {
 func (m Middlewares) ExecutePostResponse(opts PostResponseOptions) error {
 	for _, middleware := range m {
 		err := middleware.PostResponse(opts)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m Middlewares) ExecutePreProxyRequest(opts PreProxyRequestOptions) error {
+	for _, middleware := range m {
+		err := middleware.PreProxyRequest(opts)
 		if err != nil {
 			return err
 		}
